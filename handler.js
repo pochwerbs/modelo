@@ -1,14 +1,29 @@
-export const hello = async (event, context) => {
+import { DynamoDB } from 'aws-sdk';
+const dynamo = new DynamoDB({ region: process.env.AWS_REGION });
+const mysql = require('serverless-mysql')({
+  config: {
+    host: process.env.DB_HOSTNAME,
+    database: process.env.DB_DATABASE,
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+  },
+});
+
+export const main = async () => {
+  const db = await mysql.query(
+    'SELECT * FROM user WHERE status = ?',
+    [1]
+  );
+
+  const dyn = await dynamo.getItem({
+    TableName: 'TABLE',
+    Key: {
+      'KEY': 'VALUE',
+    },
+  }).promise();
+
   return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: `Go Serverless v1.0! ${(await message({ time: 1, copy: 'Your function executed successfully!'}))}`,
-    }),
+    mysql: db,
+    dynamo: dyn,
   };
 };
-
-const message = ({ time, ...rest }) => new Promise((resolve, reject) =>
-  setTimeout(() => {
-    resolve(`${rest.copy} (with a delay)`);
-  }, time * 1000)
-);
